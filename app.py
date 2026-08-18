@@ -7,10 +7,8 @@ from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from transformers import pipeline
 
-# Resolve base directory path
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Download necessary NLTK datasets quietly
 nltk.download('stopwords', quiet=True)
 nltk.download('wordnet', quiet=True)
 
@@ -43,40 +41,14 @@ def load_ml_resources():
 def load_transformer():
     return pipeline("sentiment-analysis", model="distilbert-base-uncased-finetuned-sst-2-english")
 
-# Page Configuration & Custom CSS Styling
 st.set_page_config(page_title="AI Sentiment Studio", page_icon="🎬", layout="centered")
 
 st.markdown("""
     <style>
-    .main-title {
-        font-size: 2.2rem;
-        font-weight: 700;
-        color: #1E293B;
-        text-align: center;
-        margin-bottom: 0.2rem;
-    }
-    .sub-title {
-        font-size: 1rem;
-        color: #64748B;
-        text-align: center;
-        margin-bottom: 2rem;
-    }
-    .result-card-pos {
-        background-color: #F0FDF4;
-        border: 2px solid #22C55E;
-        border-radius: 12px;
-        padding: 20px;
-        text-align: center;
-        margin-top: 15px;
-    }
-    .result-card-neg {
-        background-color: #FEF2F2;
-        border: 2px solid #EF4444;
-        border-radius: 12px;
-        padding: 20px;
-        text-align: center;
-        margin-top: 15px;
-    }
+    .main-title { font-size: 2.2rem; font-weight: 700; color: #1E293B; text-align: center; margin-bottom: 0.2rem; }
+    .sub-title { font-size: 1rem; color: #64748B; text-align: center; margin-bottom: 2rem; }
+    .result-card-pos { background-color: #F0FDF4; border: 2px solid #22C55E; border-radius: 12px; padding: 20px; text-align: center; margin-top: 15px; }
+    .result-card-neg { background-color: #FEF2F2; border: 2px solid #EF4444; border-radius: 12px; padding: 20px; text-align: center; margin-top: 15px; }
     .result-title-pos { color: #15803D; font-size: 1.5rem; font-weight: 700; }
     .result-title-neg { color: #B91C1C; font-size: 1.5rem; font-weight: 700; }
     </style>
@@ -85,73 +57,68 @@ st.markdown("""
 st.markdown('<div class="main-title">🎬 Movie Review Sentiment Analyzer</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-title">Test Natural Language Processing algorithms in real-time</div>', unsafe_allow_html=True)
 
-# Sidebar UI
 st.sidebar.header("⚙️ Model Configuration")
 model_option = st.sidebar.selectbox(
     "Select Model Architecture:",
     ["Naïve Bayes", "Support Vector Machine (SVM)", "Transformer (DistilBERT)"]
 )
 
-# Text Input Area
-user_text = st.text_area("Movie Review Input:", placeholder="Type or paste your movie review here...", height=130)
+user_text = st.text_area("Movie Review Input:", placeholder="Type or paste any sentence or review here...", height=130)
 
-# Quick Sample Buttons
-st.write("💡 **Need an example? Try clicking one:**")
+st.write("💡 **Try clicking a sample sentence:**")
 col_s1, col_s2, col_s3 = st.columns(3)
-if col_s1.button("Positive Sample"):
-    user_text = "This movie was absolutely outstanding! Phenomenal acting and great cinematography."
-if col_s2.button("Negative Sample"):
-    user_text = "Completely boring, terrible storyline and a total waste of time."
-if col_s3.button("Greeting / Conversational"):
-    user_text = "Hello, how are you today?"
+if col_s1.button("Positive Sentence"):
+    user_text = "This movie had an unbelievable plot and magnificent visual effects."
+if col_s2.button("Negative Sentence"):
+    user_text = "The acting was dreadful and I wanted to leave the theater early."
+if col_s3.button("Conversational Sentence"):
+    user_text = "Hello, how are you feeling today?"
 
 if st.button("🔍 Analyze Sentiment", type="primary", use_container_width=True):
     if not user_text.strip():
-        st.warning("⚠️ Please enter a review sentence before analyzing.")
+        st.warning("⚠️ Please enter text before analyzing.")
     else:
-        cleaned_input = clean_text(user_text)
+        with st.spinner("Analyzing text..."):
+            cleaned_input = clean_text(user_text)
+            
+            # Fallback to original text if stop-word removal leaves text empty
+            input_for_ml = cleaned_input if cleaned_input.strip() else user_text.lower()
 
-        # Handle conversational phrases like "how are you" that contain zero sentiment keywords
-        if model_option != "Transformer (DistilBERT)" and not cleaned_input.strip():
-            st.info("ℹ️ **No sentiment keywords detected.** The text entered consists only of common stop words (e.g. *'how'*, *'are'*, *'you'*). Please type a movie review or opinion sentence.")
+            sentiment = ""
+            confidence_text = ""
+
+            if model_option in ["Naïve Bayes", "Support Vector Machine (SVM)"]:
+                vectorizer, nb_model, svm_model = load_ml_resources()
+                vec = vectorizer.transform([input_for_ml])
+
+                if model_option == "Naïve Bayes":
+                    pred = nb_model.predict(vec)[0]
+                    proba = nb_model.predict_proba(vec)[0]
+                    confidence_text = f"Confidence Score: {max(proba)*100:.1f}%"
+                else:
+                    pred = svm_model.predict(vec)[0]
+                    confidence_text = "Classification Method: Linear SVM Boundary"
+
+                sentiment = "Positive" if pred == 1 else "Negative"
+
+            elif model_option == "Transformer (DistilBERT)":
+                pipe = load_transformer()
+                out = pipe(user_text)[0]
+                sentiment = out['label'].capitalize()
+                confidence_text = f"Confidence Score: {out['score']*100:.1f}%"
+
+        # Display Result
+        if sentiment == "Positive":
+            st.markdown(f"""
+                <div class="result-card-pos">
+                    <div class="result-title-pos">😊 POSITIVE SENTIMENT</div>
+                    <p style="color: #166534; margin-top: 5px; font-weight: 500;">{confidence_text}</p>
+                </div>
+            """, unsafe_allow_html=True)
         else:
-            with st.spinner("Analyzing text..."):
-                sentiment = ""
-                confidence_text = ""
-
-                if model_option in ["Naïve Bayes", "Support Vector Machine (SVM)"]:
-                    vectorizer, nb_model, svm_model = load_ml_resources()
-                    vec = vectorizer.transform([cleaned_input])
-
-                    if model_option == "Naïve Bayes":
-                        pred = nb_model.predict(vec)[0]
-                        proba = nb_model.predict_proba(vec)[0]
-                        confidence = max(proba) * 100
-                        confidence_text = f"Confidence Score: {confidence:.1f}%"
-                    else: # SVM
-                        pred = svm_model.predict(vec)[0]
-                        confidence_text = "Classification: Binary (SVM Margin)"
-
-                    sentiment = "Positive" if pred == 1 else "Negative"
-
-                elif model_option == "Transformer (DistilBERT)":
-                    pipe = load_transformer()
-                    out = pipe(user_text)[0]
-                    sentiment = out['label'].capitalize()
-                    confidence_text = f"Confidence Score: {out['score']*100:.1f}%"
-
-            # Display Result Card
-            if sentiment == "Positive":
-                st.markdown(f"""
-                    <div class="result-card-pos">
-                        <div class="result-title-pos">😊 POSITIVE SENTIMENT</div>
-                        <p style="color: #166534; margin-top: 5px; font-weight: 500;">{confidence_text}</p>
-                    </div>
-                """, unsafe_allow_html=True)
-            else:
-                st.markdown(f"""
-                    <div class="result-card-neg">
-                        <div class="result-title-neg">🙁 NEGATIVE SENTIMENT</div>
-                        <p style="color: #991B1B; margin-top: 5px; font-weight: 500;">{confidence_text}</p>
-                    </div>
-                """, unsafe_allow_html=True)
+            st.markdown(f"""
+                <div class="result-card-neg">
+                    <div class="result-title-neg">🙁 NEGATIVE SENTIMENT</div>
+                    <p style="color: #991B1B; margin-top: 5px; font-weight: 500;">{confidence_text}</p>
+                </div>
+            """, unsafe_allow_html=True)
