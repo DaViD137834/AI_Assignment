@@ -1,6 +1,7 @@
 import os
 import random
 import numpy as np
+import pandas as pd
 import streamlit as st
 import joblib
 import re
@@ -17,18 +18,26 @@ nltk.download('wordnet', quiet=True)
 stop_words = set(stopwords.words('english'))
 lemmatizer = WordNetLemmatizer()
 
-# Pool of random review samples
-SAMPLE_REVIEWS = [
-    "This movie was an absolute masterpiece! Incredible acting and brilliant plot.",
-    "Complete waste of time. Boring storyline and terrible execution.",
-    "I'm not sure how I feel about this film. Some parts were good, others dragged.",
-    "Hello, how are you feeling today?",
-    "Visually stunning, though the pacing in the second act was a bit slow.",
-    "Hands down one of the worst movies I have ever watched in my life.",
-    "10 out of 10! Highly recommend watching this with family and friends.",
-    "The soundtrack was amazing, but the ending made zero sense.",
-    "Dreadful dialogue and horrible performances across the board."
-]
+# Load reviews dynamically from CSV dataset
+@st.cache_data
+def load_dataset_reviews():
+    csv_path = os.path.join(BASE_DIR, 'cleaned_dataset.csv')
+    if os.path.exists(csv_path):
+        df = pd.read_csv(csv_path)
+        # Use original 'review' column if present, otherwise 'clean_text'
+        col = 'review' if 'review' in df.columns else 'clean_text'
+        return df[col].dropna().tolist()
+    else:
+        # Fallback pool if cleaned_dataset.csv is not uploaded to GitHub
+        return [
+            "This movie was an absolute masterpiece! Incredible acting and brilliant plot.",
+            "Complete waste of time. Boring storyline and terrible execution.",
+            "Visually stunning, though the pacing in the second act was a bit slow.",
+            "Hands down one of the worst movies I have ever watched in my life.",
+            "10 out of 10! Highly recommend watching this with family and friends.",
+            "The soundtrack was amazing, but the ending made zero sense.",
+            "Dreadful dialogue and horrible performances across the board."
+        ]
 
 def clean_text(text):
     if not isinstance(text, str):
@@ -78,14 +87,27 @@ model_option = st.sidebar.selectbox(
     ["Naïve Bayes", "Support Vector Machine (SVM)", "Transformer (DistilBERT)"]
 )
 
-# Callback to insert a random review from the pool
-def pick_random_sample():
-    st.session_state["review_input"] = random.choice(SAMPLE_REVIEWS)
+# Initialize Non-Repeating Review Deck in Session State
+all_reviews = load_dataset_reviews()
+
+if "review_deck" not in st.session_state or len(st.session_state["review_deck"]) == 0:
+    deck = all_reviews.copy()
+    random.shuffle(deck)
+    st.session_state["review_deck"] = deck
 
 if "review_input" not in st.session_state:
     st.session_state["review_input"] = ""
 
-st.button("🎲 Pick Random Review", on_click=pick_random_sample, use_container_width=True)
+# Callback: Pop one non-repeating review off the deck on each click
+def pick_next_unique_review():
+    if len(st.session_state["review_deck"]) == 0:
+        deck = all_reviews.copy()
+        random.shuffle(deck)
+        st.session_state["review_deck"] = deck
+    
+    st.session_state["review_input"] = st.session_state["review_deck"].pop()
+
+st.button("🎲 Pick Random Review from Dataset", on_click=pick_next_unique_review, use_container_width=True)
 
 user_text = st.text_area("Movie Review Input:", key="review_input", placeholder="Type or paste any sentence or review here...", height=130)
 
