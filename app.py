@@ -1,4 +1,5 @@
 import os
+import random
 import numpy as np
 import streamlit as st
 import joblib
@@ -15,6 +16,19 @@ nltk.download('wordnet', quiet=True)
 
 stop_words = set(stopwords.words('english'))
 lemmatizer = WordNetLemmatizer()
+
+# Pool of random review samples
+SAMPLE_REVIEWS = [
+    "This movie was an absolute masterpiece! Incredible acting and brilliant plot.",
+    "Complete waste of time. Boring storyline and terrible execution.",
+    "I'm not sure how I feel about this film. Some parts were good, others dragged.",
+    "Hello, how are you feeling today?",
+    "Visually stunning, though the pacing in the second act was a bit slow.",
+    "Hands down one of the worst movies I have ever watched in my life.",
+    "10 out of 10! Highly recommend watching this with family and friends.",
+    "The soundtrack was amazing, but the ending made zero sense.",
+    "Dreadful dialogue and horrible performances across the board."
+]
 
 def clean_text(text):
     if not isinstance(text, str):
@@ -44,7 +58,6 @@ def load_transformer():
 
 st.set_page_config(page_title="AI Sentiment Studio", page_icon="🎬", layout="centered")
 
-# High-contrast title colors designed for both Light and Dark mode
 st.markdown("""
     <style>
     .main-title { font-size: 2.2rem; font-weight: 700; color: #38BDF8; text-align: center; margin-bottom: 0.2rem; }
@@ -65,18 +78,14 @@ model_option = st.sidebar.selectbox(
     ["Naïve Bayes", "Support Vector Machine (SVM)", "Transformer (DistilBERT)"]
 )
 
-# Function to dynamically set text area input via state
-def set_sample_text(text):
-    st.session_state["review_input"] = text
+# Callback to insert a random review from the pool
+def pick_random_sample():
+    st.session_state["review_input"] = random.choice(SAMPLE_REVIEWS)
 
 if "review_input" not in st.session_state:
     st.session_state["review_input"] = ""
 
-st.write("💡 **Try clicking a sample sentence:**")
-col_s1, col_s2, col_s3 = st.columns(3)
-col_s1.button("Positive Sentence", on_click=set_sample_text, args=("This movie had an unbelievable plot and magnificent visual effects.",))
-col_s2.button("Negative Sentence", on_click=set_sample_text, args=("The acting was dreadful and I wanted to leave the theater early.",))
-col_s3.button("Conversational Sentence", on_click=set_sample_text, args=("Hello, how are you feeling today?",))
+st.button("🎲 Pick Random Review", on_click=pick_random_sample, use_container_width=True)
 
 user_text = st.text_area("Movie Review Input:", key="review_input", placeholder="Type or paste any sentence or review here...", height=130)
 
