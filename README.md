@@ -1,10 +1,10 @@
 # BMCS2074 Artificial Intelligence — Group Assignment
 ## Comparative Sentiment Analysis on IMDB Movie Reviews: From Classical Machine Learning to Transformer Architectures
 
-**Tutorial Group:** G5
-**Tutor:** Dr Cheng Kam Ching
-**Session:** 202605, Year 2026/27
-**Programme:** RDS Y2S1 (Bachelor of Data Science)
+**Tutorial Group:** G5  
+**Tutor:** Dr Cheng Kam Ching  
+**Session:** 202605, Year 2026/27  
+**Programme:** RDS Y2S1 (Bachelor of Data Science)  
 
 ### Team Members
 
@@ -45,7 +45,7 @@ combined into a majority-vote hybrid ensemble.
 
 | Component | Tool | Version |
 |---|---|---|
-| Language | Python | *[fill in, e.g. 3.10]* |
+| Language | Python | 3.12.7 |
 | ML framework | scikit-learn | 1.3.2 |
 | Transformers | Hugging Face `transformers` | 4.37.2 |
 | NLP preprocessing | NLTK | 3.8.1 |
@@ -57,7 +57,7 @@ combined into a majority-vote hybrid ensemble.
 
 ## 3. Supported Operating System / Execution Environment
 
-- Tested on: *[e.g. Windows 11 / macOS / Ubuntu 22.04 — fill in]*
+- Tested on: *Windows 11 Home / macOS Sonoma / Ubuntu 22.04 LTS*
 - Also runnable on: Jupyter Notebook / Google Colab (GPU runtime recommended for the DistilBERT
   section)
 
@@ -65,26 +65,26 @@ combined into a majority-vote hybrid ensemble.
 
 ## 4. System Requirements
 
-- **Runtime:** Python *[version]*
+- **Runtime:** Python 3.12+(compatible with Python 3.9–3.12)
 - **Recommended tools:** Anaconda or venv, VS Code or Jupyter Notebook / Google Colab
 - **Internet access:** Required on first run to download the DistilBERT model weights from
   HuggingFace Hub and (if not bundled) the IMDB dataset from Kaggle.
 - **Hardware:**
-  - CPU: sufficient for Naïve Bayes and SVM (near-instant on the full 10,000-sample test set)
-  - GPU: recommended for DistilBERT inference — the notebook environment evaluated it on a
-    subset of 500 samples due to execution-time limits without one
-  - RAM: *[fill in, e.g. 8GB+]*
+  - CPU: Multi-core processor (sufficient for Naïve Bayes, Linear SVM, and single-review inference)
+  - GPU: Recommended for DistilBERT batch evaluation (the notebook evaluated DistilBERT on a
+    500-sample subset due to CPU execution-time constraints)
+  - RAM: 8GB minimum (16GB recommended for smooth Transformer loading)
 - **Approximate timings** *(fill in with your actual measured times)*:
-  - Environment/dependency installation: ~__ min
-  - Dataset load + preprocessing: ~__ min
-  - Naïve Bayes / SVM training: ~__ sec–min
-  - DistilBERT inference (500 samples): ~__ min
+  - Environment/dependency installation: ~2-3 min
+  - Dataset load + preprocessing: ~15–20 sec
+  - Naïve Bayes / SVM training: ~5–10 sec
+  - DistilBERT inference (500 samples): ~1–2 min (GPU) / ~4–5 min (CPU)
 
 ---
 
 ## 5. Installation
 
-1. Clone or extract the project folder.
+1. Extract the project ZIP folder RDS2S1G5_G3_ComparativeSentimentAnalysis.zip.
 2. Create and activate a virtual environment (recommended):
    ```bash
    python -m venv venv
@@ -92,23 +92,24 @@ combined into a majority-vote hybrid ensemble.
    ```
 3. Install dependencies:
    ```bash
-   pip install -r requirements.txt
+   pip install -r 05_Installation_and_User_Guide/requirements.txt
    ```
    *(See `requirements.txt` below — update with your actual pinned versions.)*
 4. Download required NLTK resources (one-time):
    ```bash
-   python -m nltk.downloader stopwords wordnet punkt
+   python -m nltk.downloader stopwords wordnet
    ```
 
 ### requirements.txt (suggested contents — verify against your actual imports)
 ```
-scikit-learn==1.3.2
-transformers==4.37.2
-nltk==3.8.1
-streamlit==1.31.0
+sstreamlit==1.31.0
 pandas==2.1.4
 numpy==1.26.2
-torch          # required by transformers/DistilBERT — pin the version you used
+scikit-learn==1.3.2
+nltk==3.8.1
+transformers==4.37.2
+torch==2.2.0
+joblib==1.3.2
 ```
 
 ---
@@ -117,12 +118,11 @@ torch          # required by transformers/DistilBERT — pin the version you use
 
 - **Primary dataset:** IMDB Dataset of 50K Movie Reviews (Maas et al.), accessed via Kaggle.
   - Download link: https://www.kaggle.com/datasets/lakshmi25npathi/imdb-dataset-of-50k-movie-reviews
-  - Place the CSV at: *[fill in expected path, e.g. `data/IMDB_Dataset.csv`]*
+  - Place the CSV at: `03_Dataset/IMDBDataset.csv`
 - **Custom out-of-domain dataset:** 25 manually curated contemporary reviews (Letterboxd/Reddit
-  sourced), included at: *[fill in path, e.g. `data/custom_reviews.csv`]*
+  sourced), included at: `03_Dataset/real_world_test.csv`
 - **Trained models:**
-  - Naïve Bayes / SVM: trained from scratch on script run (fast, no pre-saved weights needed) —
-    or specify if you saved `.pkl` files and where.
+  - Naïve Bayes / Linear SVM: Vectorizer and model binaries pre-saved at `04_Trained_Model/vectorizer.pkl`, `04_Trained_Model/nb_model.pkl`, and       `04_Trained_Model/svm_model.pkl`.
   - DistilBERT: pre-trained weights (`distilbert-base-uncased-finetuned-sst-2-english`) auto-downloaded
     from HuggingFace Hub on first run (requires internet).
 
@@ -133,24 +133,28 @@ torch          # required by transformers/DistilBERT — pin the version you use
 *(Fill in with your actual filenames/commands — placeholders below)*
 
 ```bash
-# Run the full training + evaluation pipeline
-python main.py
+# Option 1: Run full model training & evaluation notebook
+jupyter notebook 02_Source_Code/AI_Assignment.ipynb
 
-# OR launch the Streamlit web app
-streamlit run app.py
+# Option 2: Launch the interactive Streamlit web application
+streamlit run 02_Source_Code/app.py
 ```
 
 ---
 
 ## 8. Test-Input Instructions & Expected Output
 
-- **Input:** a single movie review string (via Streamlit text box) or a CSV of reviews (batch mode).
+- **Input:** Single movie review string (via Streamlit text area) or batch evaluation in notebook.
 - **Example input:** `"While some critics argue that the pacing is sluggish, I found the deliberate build-up to be exactly what was needed."`
 - **Expected output:** predicted sentiment label (`Positive` / `Negative`) from each of the three
   models plus the ensemble majority vote, and confidence/probability scores where available.
-- **Evaluation mode output:** Accuracy, Precision, Recall, F1-Score printed/displayed per model
-  (see Section 4 Results in the report for reference numbers: NB 0.855 / SVM 0.883 / DistilBERT 0.904
-  accuracy).
+- ## Benchmark Results
+
+| Model | Accuracy | Precision | Recall | F1-Score |
+| :--- | :---: | :---: | :---: | :---: |
+| **Naïve Bayes** | 0.8547 | 0.8556 | 0.8561 | 0.8559 |
+| **Linear SVM** | 0.8834 | 0.8801 | **0.8899** | 0.8849 |
+| **DistilBERT** | **0.9040** | **0.9315** | 0.8608 | **0.8947** |
 
 ---
 
@@ -185,7 +189,7 @@ streamlit run app.py
 | Ambrose Teo Chen Bin | *[fill in]* | *[fill in]* |
 | Teh Zi Yan | *[fill in]* | *[fill in]* |
 
----
+---    
 
 ## References
 
