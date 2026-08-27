@@ -84,7 +84,7 @@ st.markdown('<div class="sub-title">Test Natural Language Processing algorithms 
 st.sidebar.header("⚙️ Model Configuration")
 model_option = st.sidebar.selectbox(
     "Select Model Architecture:",
-    ["Naïve Bayes", "Support Vector Machine (SVM)", "Transformer (DistilBERT)"]
+    ["Naïve Bayes", "Support Vector Machine (SVM)", "Transformer (DistilBERT)", "🌟 Hybrid Ensemble (Majority Vote)"]
 )
 
 # Initialize Non-Repeating Review Deck in Session State
@@ -122,20 +122,21 @@ if st.button("🔍 Analyze Sentiment", type="primary", use_container_width=True)
             sentiment = ""
             confidence_text = ""
 
-            if model_option in ["Naïve Bayes", "Support Vector Machine (SVM)"]:
-                vectorizer, nb_model, svm_model = load_ml_resources()
+            if model_option == "Naïve Bayes":
+                vectorizer, nb_model, _ = load_ml_resources()
                 vec = vectorizer.transform([input_for_ml])
+                pred = nb_model.predict(vec)[0]
+                proba = nb_model.predict_proba(vec)[0]
+                confidence_text = f"Confidence Score: {max(proba)*100:.1f}%"
+                sentiment = "Positive" if pred == 1 else "Negative"
 
-                if model_option == "Naïve Bayes":
-                    pred = nb_model.predict(vec)[0]
-                    proba = nb_model.predict_proba(vec)[0]
-                    confidence_text = f"Confidence Score: {max(proba)*100:.1f}%"
-                else: # SVM
-                    pred = svm_model.predict(vec)[0]
-                    distance = svm_model.decision_function(vec)[0]
-                    confidence_score = (1 / (1 + np.exp(-abs(distance)))) * 100
-                    confidence_text = f"Confidence Score: {confidence_score:.1f}%"
-
+            elif model_option == "Support Vector Machine (SVM)":
+                vectorizer, _, svm_model = load_ml_resources()
+                vec = vectorizer.transform([input_for_ml])
+                pred = svm_model.predict(vec)[0]
+                distance = svm_model.decision_function(vec)[0]
+                confidence_score = (1 / (1 + np.exp(-abs(distance)))) * 100
+                confidence_text = f"Confidence Score: {confidence_score:.1f}%"
                 sentiment = "Positive" if pred == 1 else "Negative"
 
             elif model_option == "Transformer (DistilBERT)":
@@ -143,6 +144,21 @@ if st.button("🔍 Analyze Sentiment", type="primary", use_container_width=True)
                 out = pipe(user_text)[0]
                 sentiment = out['label'].capitalize()
                 confidence_text = f"Confidence Score: {out['score']*100:.1f}%"
+                
+            elif model_option == "🌟 Hybrid Ensemble (Majority Vote)":
+                vectorizer, nb_model, svm_model = load_ml_resources()
+                pipe = load_transformer()
+                
+                vec = vectorizer.transform([input_for_ml])
+                nb_pred = nb_model.predict(vec)[0]
+                svm_pred = svm_model.predict(vec)[0]
+                
+                bert_out = pipe(user_text)[0]
+                bert_pred = 1 if bert_out['label'] == 'POSITIVE' else 0
+
+                total_votes = nb_pred + svm_pred + bert_pred
+                sentiment = "Positive" if total_votes >= 2 else "Negative"
+                confidence_text = f"Agreement: {total_votes}/3 Models Voted {sentiment}"
 
         if sentiment == "Positive":
             st.markdown(f"""
