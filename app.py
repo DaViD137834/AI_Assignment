@@ -121,6 +121,10 @@ if st.button("🔍 Analyze Sentiment", type="primary", use_container_width=True)
 
             sentiment = ""
             confidence_text = ""
+            
+            # Variables to store breakdown data for Point 3
+            show_breakdown = False
+            nb_label, svm_label, bert_label = "", "", ""
 
             if model_option == "Naïve Bayes":
                 vectorizer, nb_model, _ = load_ml_resources()
@@ -146,6 +150,7 @@ if st.button("🔍 Analyze Sentiment", type="primary", use_container_width=True)
                 confidence_text = f"Confidence Score: {out['score']*100:.1f}%"
                 
             elif model_option == "🌟 Hybrid Ensemble (Majority Vote)":
+                show_breakdown = True
                 vectorizer, nb_model, svm_model = load_ml_resources()
                 pipe = load_transformer()
                 
@@ -156,10 +161,19 @@ if st.button("🔍 Analyze Sentiment", type="primary", use_container_width=True)
                 bert_out = pipe(user_text)[0]
                 bert_pred = 1 if bert_out['label'] == 'POSITIVE' else 0
 
+                # Track individual text for breakdown UI
+                nb_label = "🟢 Positive" if nb_pred == 1 else "🔴 Negative"
+                svm_label = "🟢 Positive" if svm_pred == 1 else "🔴 Negative"
+                bert_label = "🟢 Positive" if bert_pred == 1 else "🔴 Negative"
+
                 total_votes = nb_pred + svm_pred + bert_pred
                 sentiment = "Positive" if total_votes >= 2 else "Negative"
-                confidence_text = f"Agreement: {total_votes}/3 Models Voted {sentiment}"
+                
+                # FIX POINT 1: Calculate correct voter agreement dynamic count
+                votes_for_outcome = total_votes if sentiment == "Positive" else (3 - total_votes)
+                confidence_text = f"Agreement: {votes_for_outcome}/3 Models Voted {sentiment}"
 
+        # Render Sentiment Result Card
         if sentiment == "Positive":
             st.markdown(f"""
                 <div class="result-card-pos">
@@ -174,3 +188,18 @@ if st.button("🔍 Analyze Sentiment", type="primary", use_container_width=True)
                     <p style="color: #991B1B; margin-top: 5px; font-weight: 500;">{confidence_text}</p>
                 </div>
             """, unsafe_allow_html=True)
+
+        # FIX POINT 3: Render Expandable Model Breakdown Section
+        if show_breakdown:
+            st.markdown("<br>", unsafe_allow_html=True) # Adds a clean padding gap
+            with st.expander("📊 View Individual Model Voting Breakdown", expanded=True):
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.markdown("**Naïve Bayes**")
+                    st.markdown(f"`{nb_label}`")
+                with col2:
+                    st.markdown("**Linear SVM**")
+                    st.markdown(f"`{svm_label}`")
+                with col3:
+                    st.markdown("**DistilBERT Transformer**")
+                    st.markdown(f"`{bert_label}`")
