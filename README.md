@@ -185,7 +185,7 @@ streamlit run 02_Source_Code/app.py
 
 | Member | Files/Modules Owned | Component |
 |---|---|---|
-| Ambrose Teo Chen Bin | `02_Source_Code/AI_Assignment.ipynb`<br>`03_Dataset/cleaned_dataset.csv` | Text preprocessing pipeline (Regex/NLTK), Linear SVM classifier implementation, and notebook training workflow. |
+| Ambrose Teo Chen Bin | `02_Source_Code/AI_Assignment.ipynb`<br>`03_Dataset/cleaned_dataset.csv`<br>`03_Dataset/IMDBDataset.csv` | Text preprocessing pipeline (Regex/NLTK), Linear SVM classifier implementation, and notebook training workflow. |
 | David Lee Yong Fu | `02_Source_Code/AI_Assignment.ipynb`<br>`03_Dataset/cleaned_dataset.csv`<br>`03_Dataset/real_world_test.csv` | Naïve Bayes baseline model implementation, out-of-domain dataset collection, and error analysis. |
-| Teh Zi Yan | `02_Source_Code/AI_Assignment.ipynb`<br>`03_Dataset/cleaned_dataset.csv` | DistilBERT transformer integration, pipeline evaluation module, and Hybrid Ensemble (Majority Vote) logic implementation. |
+| Teh Zi Yan | `02_Source_Code/AI_Assignment.ipynb`<br>`03_Dataset/cleaned_dataset.csv`<br>`02_Source_Code/app.py` | DistilBERT transformer integration, pipeline evaluation module, and Hybrid Ensemble (Majority Vote) logic implementation. |
 
