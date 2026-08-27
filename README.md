@@ -185,18 +185,7 @@ streamlit run 02_Source_Code/app.py
 
 | Member | Files/Modules Owned | Component |
 |---|---|---|
-| David Lee Yong Fu | *[e.g. `distilbert_model.ipynb`]* | DistilBERT transformer pipeline |
-| Ambrose Teo Chen Bin | *[fill in]* | *[fill in]* |
-| Teh Zi Yan | *[fill in]* | *[fill in]* |
+| Ambrose Teo Chen Bin | `02_Source_Code/AI_Assignment.ipynb`<br>`03_Dataset/cleaned_dataset.csv` | Text preprocessing pipeline (Regex/NLTK), Linear SVM classifier implementation, and notebook training workflow. |
+| David Lee Yong Fu | `02_Source_Code/AI_Assignment.ipynb`<br>`03_Dataset/cleaned_dataset.csv`<br>`03_Dataset/real_world_test.csv` | Naïve Bayes baseline model implementation, out-of-domain dataset collection, and error analysis. |
+| Teh Zi Yan | `02_Source_Code/AI_Assignment.ipynb`<br>`03_Dataset/cleaned_dataset.csv` | DistilBERT transformer integration, pipeline evaluation module, and Hybrid Ensemble (Majority Vote) logic implementation. |
 
----    
-
-## References
-
-- Maas, A. L., Daly, R. E., Pham, P. T., Huang, D., Ng, A. Y., & Potts, C. (2011). Learning word
-  vectors for sentiment analysis. *ACL-HLT 2011*. https://aclanthology.org/P11-1015/
-- Pedregosa, F. et al. (2011). Scikit-learn: Machine learning in Python. *JMLR, 12*, 2825–2830.
-- Sanh, V., Debut, L., Chaumond, J., & Wolf, T. (2019). DistilBERT, a distilled version of BERT.
-  *arXiv:1910.01108*. https://arxiv.org/abs/1910.01108
-- Bird, S., Klein, E., & Loper, E. (2009). *Natural Language Processing with Python*. O'Reilly.
-- Streamlit. (2024). https://streamlit.io/
